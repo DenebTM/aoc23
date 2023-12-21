@@ -31,52 +31,6 @@ fn stdio_lines_trimmed() -> Vec<String> {
         .collect()
 }
 
-// #[derive(Clone, Copy, PartialEq, Eq)]
-// enum GroupKind {
-//     Ok,
-//     Damaged,
-//     Unknown,
-// }
-
-// impl From<char> for GroupKind {
-//     fn from(value: char) -> Self {
-//         match value {
-//             '.' => Self::Ok,
-//             '#' => Self::Damaged,
-//             _ => Self::Unknown,
-//         }
-//     }
-// }
-
-// #[derive(Clone, Copy)]
-// struct Group {
-//     kind: GroupKind,
-//     len: usize,
-// }
-
-// fn split_chars(line: &str) -> Vec<Group> {
-//     let mut list: Vec<Group> = Vec::new();
-//     let mut current: String = String::new();
-
-//     let mut current = Group {
-//         kind: GroupKind::Unknown,
-//         len: 0,
-//     };
-
-//     for ch in line.chars() {
-//         if current.len == 0 {
-//             current.kind = ch.into();
-//         } else if current.kind == ch.into() {
-//             current.len += 1;
-//         } else {
-//             list.push(current);
-//             current.len = 0;
-//         }
-//     }
-
-//     list
-// }
-
 fn placements(line: &str, group_len: usize) -> HashSet<usize> {
     if line.len() < group_len {
         return HashSet::new();
@@ -84,42 +38,22 @@ fn placements(line: &str, group_len: usize) -> HashSet<usize> {
 
     let mut pos = HashSet::new();
 
-    let mut start = 0;
-    let mut known_len = 0;
-    let mut unknown_len = 0;
+    for start in 0..=(line.len() - group_len) {
+        let subline = &line[start..];
 
-    for ch in line.chars() {
-        if known_len + unknown_len == group_len && matches!(ch, '.' | '?') {
+        // found contiguous [#?] group
+        if (0..group_len)
+            .map(|ind| subline.chars().nth(ind))
+            .flatten()
+            .all(|ch| matches!(ch, '#' | '?'))
+            // at the start of the string, or preceded by a . or ?
+            && (start == 0 || matches!(line.chars().nth(start - 1), Some('.') | Some('?')))
+            // at the end of the string, or succeeded by a . or ?
+            && (start + group_len == line.len()
+                || matches!(line.chars().nth(start + group_len), Some('.') | Some('?')))
+        {
             pos.insert(start);
-            break;
-        } else if ch == '#' {
-            known_len += 1;
-        } else if ch == '?' {
-            unknown_len += 1;
-        } else {
-            start += known_len + unknown_len + 1;
-            known_len = 0;
-            unknown_len = 0;
         }
-    }
-
-    // finish up last element
-    if known_len + unknown_len == group_len {
-        pos.insert(start);
-    }
-
-    let mut next_index = 1;
-    while line.chars().nth(next_index - 1) == Some('#') && next_index < line.len() {
-        next_index += 1;
-        if next_index >= line.len() {
-            break;
-        }
-    }
-
-    // found non-fixed group, try other combinations too
-    if known_len != group_len {
-        let other_pos = placements(&line[next_index..], group_len);
-        pos.extend(other_pos.iter().map(|pos| pos + next_index));
     }
 
     pos
@@ -154,27 +88,41 @@ fn test_placements() {
     let test_input = "#####";
     let positions = placements(test_input, 5);
     assert_eq!(positions, HashSet::from([0]));
-
-    let test_input = "#####";
-    let positions = placements(test_input, 4);
-    assert_eq!(positions, HashSet::from([]));
 }
 
-fn place_all_groups(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> {
+fn has_all_fixed(placement: &[usize], groups: &[usize], line: &str) -> bool {
+    for (ind, ch) in line.chars().enumerate() {
+        if ch == '#' {
+            let mut hash_found = false;
+            for (&pos, &len) in placement.iter().zip(groups.iter()) {
+                if ind >= pos && ind < (pos + len) {
+                    hash_found = true;
+                }
+            }
+            // if all groups were checked and the # does not correspond to any of them,
+            // the placement is invalid
+            if !hash_found {
+                return false;
+            }
+        }
+    }
+
+    true
+}
+
+#[test]
+fn test_has_all_fixed() {
+    assert!(has_all_fixed(&[0, 4], &[1, 1], "???.#") == true);
+    assert!(has_all_fixed(&[1, 4], &[1, 1], "???.#") == true);
+    assert!(has_all_fixed(&[2, 4], &[1, 1], "???.#") == true);
+    assert!(has_all_fixed(&[0, 2], &[1, 1], "???.#") == false);
+}
+
+fn place_groups_unfiltered(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> {
     if let Some(&group_len) = groups.first() {
         let pos = placements(line, group_len);
         if groups.len() == 1 {
-            pos.iter()
-                .filter_map(|&p| {
-                    let rest = &line[p + group_len..];
-
-                    if rest.chars().all(|c| c != '#') {
-                        Some(vec![p])
-                    } else {
-                        None
-                    }
-                })
-                .collect()
+            pos.iter().map(|&p| vec![p]).collect()
         } else {
             pos.iter()
                 .map(|&start| {
@@ -199,6 +147,14 @@ fn place_all_groups(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> {
     } else {
         HashSet::new()
     }
+}
+
+fn place_all_groups(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> {
+    place_groups_unfiltered(line, groups)
+        .iter()
+        .filter(|placement| has_all_fixed(placement, groups, line))
+        .cloned()
+        .collect()
 }
 
 #[test]
@@ -231,6 +187,31 @@ fn test_place_all_groups() {
         placements,
         HashSet::from([vec![0, 4], vec![1, 4], vec![2, 4]])
     );
+
+    let test_input = "#.#.?.###";
+    let placements = place_all_groups(test_input, &[1, 1, 3]);
+    assert_eq!(placements, HashSet::from([vec![0, 2, 6]]));
+}
+
+fn render(placement: &[usize], groups: &[usize], linelen: usize) -> String {
+    assert!(groups.len() == placement.len());
+
+    let mut str = String::new();
+    let mut len_sofar = 0;
+    for (&pos, &len) in placement.iter().zip(groups.iter()) {
+        for _ in 0..pos - len_sofar {
+            str.push('.');
+        }
+        for _ in 0..len {
+            str.push('#');
+        }
+        len_sofar += (pos - len_sofar) + len;
+    }
+    for _ in len_sofar..linelen {
+        str.push('.');
+    }
+
+    str
 }
 
 fn main() {
@@ -246,20 +227,7 @@ fn main() {
         let count = placements.len();
 
         for placement in placements {
-            let mut linelen = 0;
-            for (&pos, &len) in placement.iter().zip(groups.iter()) {
-                for _ in 0..pos - linelen {
-                    print!(".");
-                }
-                for _ in 0..len {
-                    print!("#");
-                }
-                linelen += (pos - linelen) + len;
-            }
-            for _ in linelen..line.len() {
-                print!(".");
-            }
-            println!();
+            println!("{}", render(&placement, &groups, line.len()));
         }
         println!("{count}");
 
