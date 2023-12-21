@@ -221,37 +221,34 @@ fn main() {
     let unfolded_sum: usize = stdio_lines_trimmed()
         .par_iter()
         .map(move |line| {
-            let unfolded_count = {
-                let (folded_line, groups) = line.split_at(line.find(' ').unwrap());
-                let folded_groups: Vec<usize> = groups[1..]
-                    .split(',')
-                    .map(FromStr::from_str)
-                    .flatten()
-                    .collect();
+            let (folded_line, groups) = line.split_at(line.find(' ').unwrap());
+            let folded_groups: Vec<usize> = groups[1..]
+                .split(',')
+                .map(FromStr::from_str)
+                .flatten()
+                .collect();
 
-                let unfolded_line: String = repeat([folded_line, "?"]).flatten().take(9).collect();
-                let unfolded_groups: Vec<usize> =
-                    repeat(folded_groups.clone()).take(5).flatten().collect();
+            let unfolded_line: String = repeat([folded_line, "?"]).flatten().take(9).collect();
+            let unfolded_groups: Vec<usize> =
+                repeat(folded_groups.clone()).take(5).flatten().collect();
 
-                // let folded_placements = place_all_groups(folded_line, &folded_groups);
-                // let folded_count = folded_placements.len();
-                // println!("folded: {folded_count}");
+            // let folded_placements = place_all_groups(folded_line, &folded_groups);
+            // let folded_count = folded_placements.len();
+            // println!("folded: {folded_count}");
 
-                let unfiltered = place_groups_unfiltered(&unfolded_line, &unfolded_groups);
-                let unfolded_placements = unfiltered.iter().filter(move |&placement| {
-                    has_all_fixed(placement, &unfolded_groups, &unfolded_line)
-                });
-
-                // for placement in folded_placements {
-                //     println!("{}", render(&placement, &groups, line.len()));
-                // }
-
-                unfolded_placements.count()
-            };
-
+            let unfiltered = place_groups_unfiltered(&unfolded_line, &unfolded_groups);
+            let unfolded_placements = unfiltered.iter().filter(move |&placement| {
+                has_all_fixed(placement, &unfolded_groups, &unfolded_line)
+            });
+            let unfolded_count = unfolded_placements.count();
             println!("unfolded: {unfolded_count}");
-            unfolded_count
+
+            // for placement in folded_placements {
+            //     println!("{}", render(&placement, &groups, line.len()));
+            // }
+
             // (folded_count, unfolded_count)
+            unfolded_count
         })
         .sum();
     // .reduce(move || (0, 0), |l, r| (l.0 + r.0, l.1 + r.1));
