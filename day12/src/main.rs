@@ -28,8 +28,8 @@ fn stdio_lines_trimmed() -> Vec<String> {
     let stdin = io::stdin();
     stdin
         .lines()
-        .flat_map(|line| line.ok())
-        .map(|line| line.trim().to_string())
+        .flat_map(move |line| line.ok())
+        .map(move |line| line.trim().to_string())
         .collect()
 }
 
@@ -45,7 +45,7 @@ fn placements(line: &str, group_len: usize) -> HashSet<usize> {
 
         // found contiguous [#?] group
         if subline[..group_len].chars()
-            .all(|ch| matches!(ch, '#' | '?'))
+            .all(move |ch| matches!(ch, '#' | '?'))
             // at the start of the string, or preceded by a . or ?
             && (start == 0 || matches!(line.chars().nth(start - 1), Some('.') | Some('?')))
             // at the end of the string, or succeeded by a . or ?
@@ -122,10 +122,10 @@ fn place_groups_unfiltered(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> 
     if let Some(&group_len) = groups.first() {
         let pos = placements(line, group_len);
         if groups.len() == 1 {
-            pos.iter().map(|&p| vec![p]).collect()
+            pos.iter().map(move |&p| vec![p]).collect()
         } else {
             pos.iter()
-                .map(|&start| {
+                .map(move |&start| {
                     let rest_start = start + group_len + 1;
                     if rest_start >= line.len() {
                         vec![]
@@ -134,9 +134,12 @@ fn place_groups_unfiltered(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> 
 
                         following
                             .iter()
-                            .map(|v| {
-                                [vec![start], v.iter().map(|val| val + rest_start).collect()]
-                                    .concat()
+                            .map(move |v| {
+                                [
+                                    vec![start],
+                                    v.iter().map(move |val| val + rest_start).collect(),
+                                ]
+                                .concat()
                             })
                             .collect()
                     }
@@ -152,7 +155,7 @@ fn place_groups_unfiltered(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> 
 // fn place_all_groups<'a>(line: &str, groups: &[usize]) -> HashSet<&'a Vec<usize>> {
 //     place_groups_unfiltered(line, groups)
 //         .iter()
-//         .filter(|&placement| has_all_fixed(placement, groups, line))
+//         .filter(move |&placement| has_all_fixed(placement, groups, line))
 //         .collect()
 // }
 
@@ -217,44 +220,41 @@ fn main() {
     // let (folded_sum, unfolded_sum): (usize, usize) = lines
     let unfolded_sum: usize = stdio_lines_trimmed()
         .par_iter()
-        .map(|line| {
-            let (folded_line, groups) = line.split_at(line.find(' ').unwrap());
-            let folded_groups: Vec<usize> = groups[1..]
-                .split(',')
-                .map(FromStr::from_str)
-                .flatten()
-                .collect();
+        .map(move |line| {
+            let unfolded_count = {
+                let (folded_line, groups) = line.split_at(line.find(' ').unwrap());
+                let folded_groups: Vec<usize> = groups[1..]
+                    .split(',')
+                    .map(FromStr::from_str)
+                    .flatten()
+                    .collect();
 
-            let unfolded_line: String = repeat([folded_line, "?"]).flatten().take(9).collect();
-            let unfolded_groups: Vec<usize> =
-                repeat(folded_groups.clone()).take(5).flatten().collect();
+                let unfolded_line: String = repeat([folded_line, "?"]).flatten().take(9).collect();
+                let unfolded_groups: Vec<usize> =
+                    repeat(folded_groups.clone()).take(5).flatten().collect();
 
-            // let folded_placements = place_all_groups(folded_line, &folded_groups);
-            // let folded_count = folded_placements.len();
-            // println!("folded: {folded_count}");
+                // let folded_placements = place_all_groups(folded_line, &folded_groups);
+                // let folded_count = folded_placements.len();
+                // println!("folded: {folded_count}");
 
-            let unfiltered = place_groups_unfiltered(&unfolded_line, &unfolded_groups);
-            let unfolded_placements = unfiltered
-                .iter()
-                .filter(|&placement| has_all_fixed(placement, &unfolded_groups, &unfolded_line));
-            let unfolded_count = unfolded_placements.count();
+                let unfiltered = place_groups_unfiltered(&unfolded_line, &unfolded_groups);
+                let unfolded_placements = unfiltered.iter().filter(move |&placement| {
+                    has_all_fixed(placement, &unfolded_groups, &unfolded_line)
+                });
+
+                // for placement in folded_placements {
+                //     println!("{}", render(&placement, &groups, line.len()));
+                // }
+
+                unfolded_placements.count()
+            };
+
             println!("unfolded: {unfolded_count}");
-
-            // for placement in folded_placements {
-            //     println!("{}", render(&placement, &groups, line.len()));
-            // }
-
-            // (folded_count, unfolded_count)
-
-            std::mem::drop(unfiltered);
-            std::mem::drop(folded_groups);
-            std::mem::drop(unfolded_line);
-            std::mem::drop(unfolded_groups);
-
             unfolded_count
+            // (folded_count, unfolded_count)
         })
         .sum();
-    // .reduce(|| (0, 0), |l, r| (l.0 + r.0, l.1 + r.1));
+    // .reduce(move || (0, 0), |l, r| (l.0 + r.0, l.1 + r.1));
 
     // println!("part1: {}", folded_sum);
     println!("part2: {}", unfolded_sum);
