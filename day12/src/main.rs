@@ -1,5 +1,7 @@
 use std::{collections::HashSet, io, iter::repeat, str::FromStr};
 
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+
 #[allow(dead_code)]
 fn stdio_each<T>(func: impl Fn(&str, usize) -> T) -> Vec<T> {
     let mut output = Vec::new();
@@ -215,34 +217,41 @@ fn render(placement: &[usize], groups: &[usize], linelen: usize) -> String {
 }
 
 fn main() {
-    let (folded_sum, unfolded_sum): (usize, usize) = stdio_each(|line, _| {
-        let (folded_line, groups) = line.trim().split_at(line.find(' ').unwrap());
-        let folded_groups: Vec<usize> = groups[1..]
-            .split(',')
-            .map(FromStr::from_str)
-            .flatten()
-            .collect();
+    let lines = stdio_lines_trimmed();
 
-        let unfolded_line: String = repeat([folded_line, "?"]).flatten().take(9).collect();
-        let unfolded_groups: Vec<usize> = repeat(folded_groups.clone()).take(5).flatten().collect();
+    // let (folded_sum, unfolded_sum): (usize, usize) = lines
+    let unfolded_sum: usize = lines
+        .par_iter()
+        .map(|line| {
+            let (folded_line, groups) = line.trim().split_at(line.find(' ').unwrap());
+            let folded_groups: Vec<usize> = groups[1..]
+                .split(',')
+                .map(FromStr::from_str)
+                .flatten()
+                .collect();
 
-        let folded_placements = place_all_groups(folded_line, &folded_groups);
-        let folded_count = folded_placements.len();
-        println!("folded: {folded_count}");
+            let unfolded_line: String = repeat([folded_line, "?"]).flatten().take(9).collect();
+            let unfolded_groups: Vec<usize> =
+                repeat(folded_groups.clone()).take(5).flatten().collect();
 
-        let unfolded_placements = place_all_groups(&unfolded_line, &unfolded_groups);
-        let unfolded_count = unfolded_placements.len();
-        println!("unfolded: {unfolded_count}");
+            // let folded_placements = place_all_groups(folded_line, &folded_groups);
+            // let folded_count = folded_placements.len();
+            // println!("folded: {folded_count}");
 
-        // for placement in folded_placements {
-        //     println!("{}", render(&placement, &groups, line.len()));
-        // }
+            let unfolded_placements = place_all_groups(&unfolded_line, &unfolded_groups);
+            let unfolded_count = unfolded_placements.len();
+            println!("unfolded: {unfolded_count}");
 
-        (folded_count, unfolded_count)
-    })
-    .iter()
-    .fold((0, 0), |l, r| (l.0 + r.0, l.1 + r.1));
+            // for placement in folded_placements {
+            //     println!("{}", render(&placement, &groups, line.len()));
+            // }
 
-    println!("part1: {}", folded_sum);
+            // (folded_count, unfolded_count)
+            unfolded_count
+        })
+        .sum();
+    // .reduce(|| (0, 0), |l, r| (l.0 + r.0, l.1 + r.1));
+
+    // println!("part1: {}", folded_sum);
     println!("part2: {}", unfolded_sum);
 }
