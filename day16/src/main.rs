@@ -8,6 +8,8 @@ use std::io;
 use beam::Beam;
 use grid::Grid;
 
+use crate::grid::GridWithBeams;
+
 #[allow(dead_code)]
 fn stdio_each<T>(func: impl Fn(&str, usize) -> T) -> Vec<T> {
     let mut output = Vec::new();
@@ -44,18 +46,31 @@ fn main() {
     let mut grid = Grid::from(input);
 
     let mut beams: Vec<Beam> = vec![Beam::start()];
+    let mut num_active_beams = beams.len();
+    let mut do_print = false;
 
     let stdin = io::stdin();
 
     while beams.len() > 0 {
         let beam = beams.remove(0);
 
-        print!("\n{grid}");
-        let _ = stdin.read_line(&mut String::new()).unwrap();
+        if num_active_beams == 0 {
+            do_print = true;
+            num_active_beams = beams.len();
+        } else {
+            num_active_beams -= 1;
+        }
 
         if let Some(tile) = grid.at(beam.pos) {
             let new_beams = tile.beam_result(&beam);
             beams.extend(new_beams);
+        }
+
+        if do_print {
+            let grid_with_beams = GridWithBeams(&grid, &beams);
+            print!("\n{grid_with_beams}");
+            let _ = stdin.read_line(&mut String::new()).unwrap();
+            do_print = false;
         }
     }
 
