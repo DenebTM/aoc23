@@ -67,7 +67,13 @@ impl Tile {
     }
 
     pub fn beam_result(&mut self, beam: &Beam) -> Vec<Beam> {
-        let new_beams = match self.kind {
+        // memorize incoming beam to avoid duplicate work
+        if self.energized_dirs.contains(&beam.dir) {
+            return vec![];
+        }
+        self.energized_dirs.insert(beam.dir);
+
+        match self.kind {
             TileKind::Empty => vec![beam.forward()],
             TileKind::MirrorNWSE => match beam.dir {
                 BeamDir::Left | BeamDir::Right => vec![beam.left()],
@@ -91,13 +97,5 @@ impl Tile {
                 }
             },
         }
-        .iter()
-        .filter(|beam| !self.energized_dirs.contains(&beam.dir))
-        .copied()
-        .collect();
-
-        self.energized_dirs.insert(beam.dir);
-
-        new_beams
     }
 }
