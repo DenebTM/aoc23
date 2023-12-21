@@ -151,49 +151,48 @@ fn place_groups_unfiltered(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> 
     }
 }
 
-fn place_all_groups(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> {
-    place_groups_unfiltered(line, groups)
-        .iter()
-        .filter(|placement| has_all_fixed(placement, groups, line))
-        .cloned()
-        .collect()
-}
+// fn place_all_groups<'a>(line: &str, groups: &[usize]) -> HashSet<&'a Vec<usize>> {
+//     place_groups_unfiltered(line, groups)
+//         .iter()
+//         .filter(|&placement| has_all_fixed(placement, groups, line))
+//         .collect()
+// }
 
-#[test]
-fn test_place_all_groups() {
-    let test_input = "?????";
-    let placements = place_all_groups(test_input, &[1, 1, 1]);
-    assert_eq!(placements, HashSet::from([vec![0, 2, 4]]));
+// #[test]
+// fn test_place_all_groups() {
+//     let test_input = "?????";
+//     let placements = place_all_groups(test_input, &[1, 1, 1]);
+//     assert_eq!(placements, HashSet::from([vec![0, 2, 4]]));
 
-    let test_input = "?????";
-    let placements = place_all_groups(test_input, &[3, 1]);
-    assert_eq!(placements, HashSet::from([vec![0, 4]]));
+//     let test_input = "?????";
+//     let placements = place_all_groups(test_input, &[3, 1]);
+//     assert_eq!(placements, HashSet::from([vec![0, 4]]));
 
-    let test_input = "?????";
-    let placements = place_all_groups(test_input, &[1]);
-    assert_eq!(
-        placements,
-        HashSet::from([vec![0], vec![1], vec![2], vec![3], vec![4]])
-    );
+//     let test_input = "?????";
+//     let placements = place_all_groups(test_input, &[1]);
+//     assert_eq!(
+//         placements,
+//         HashSet::from([vec![0], vec![1], vec![2], vec![3], vec![4]])
+//     );
 
-    let test_input = "?????";
-    let placements = place_all_groups(test_input, &[1]);
-    assert_eq!(
-        placements,
-        HashSet::from([vec![0], vec![1], vec![2], vec![3], vec![4]])
-    );
+//     let test_input = "?????";
+//     let placements = place_all_groups(test_input, &[1]);
+//     assert_eq!(
+//         placements,
+//         HashSet::from([vec![0], vec![1], vec![2], vec![3], vec![4]])
+//     );
 
-    let test_input = "???.#";
-    let placements = place_all_groups(test_input, &[1, 1]);
-    assert_eq!(
-        placements,
-        HashSet::from([vec![0, 4], vec![1, 4], vec![2, 4]])
-    );
+//     let test_input = "???.#";
+//     let placements = place_all_groups(test_input, &[1, 1]);
+//     assert_eq!(
+//         placements,
+//         HashSet::from([vec![0, 4], vec![1, 4], vec![2, 4]])
+//     );
 
-    let test_input = "#.#.?.###";
-    let placements = place_all_groups(test_input, &[1, 1, 3]);
-    assert_eq!(placements, HashSet::from([vec![0, 2, 6]]));
-}
+//     let test_input = "#.#.?.###";
+//     let placements = place_all_groups(test_input, &[1, 1, 3]);
+//     assert_eq!(placements, HashSet::from([vec![0, 2, 6]]));
+// }
 
 fn render(placement: &[usize], groups: &[usize], linelen: usize) -> String {
     assert!(groups.len() == placement.len());
@@ -217,13 +216,11 @@ fn render(placement: &[usize], groups: &[usize], linelen: usize) -> String {
 }
 
 fn main() {
-    let lines = stdio_lines_trimmed();
-
     // let (folded_sum, unfolded_sum): (usize, usize) = lines
-    let unfolded_sum: usize = lines
+    let unfolded_sum: usize = stdio_lines_trimmed()
         .par_iter()
         .map(|line| {
-            let (folded_line, groups) = line.trim().split_at(line.find(' ').unwrap());
+            let (folded_line, groups) = line.split_at(line.find(' ').unwrap());
             let folded_groups: Vec<usize> = groups[1..]
                 .split(',')
                 .map(FromStr::from_str)
@@ -238,8 +235,11 @@ fn main() {
             // let folded_count = folded_placements.len();
             // println!("folded: {folded_count}");
 
-            let unfolded_placements = place_all_groups(&unfolded_line, &unfolded_groups);
-            let unfolded_count = unfolded_placements.len();
+            let unfiltered = place_groups_unfiltered(&unfolded_line, &unfolded_groups);
+            let unfolded_placements = unfiltered
+                .iter()
+                .filter(|&placement| has_all_fixed(placement, &unfolded_groups, line));
+            let unfolded_count = unfolded_placements.count();
             println!("unfolded: {unfolded_count}");
 
             // for placement in folded_placements {
