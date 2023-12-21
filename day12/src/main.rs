@@ -1,4 +1,4 @@
-use std::{collections::HashSet, io, str::FromStr};
+use std::{collections::HashSet, io, iter::repeat, str::FromStr};
 
 #[allow(dead_code)]
 fn stdio_each<T>(func: impl Fn(&str, usize) -> T) -> Vec<T> {
@@ -215,26 +215,34 @@ fn render(placement: &[usize], groups: &[usize], linelen: usize) -> String {
 }
 
 fn main() {
-    let sum: usize = stdio_each(|line, _| {
-        let (line, groups) = line.trim().split_at(line.find(' ').unwrap());
-        let groups: Vec<usize> = groups[1..]
+    let (folded_sum, unfolded_sum): (usize, usize) = stdio_each(|line, _| {
+        let (folded_line, groups) = line.trim().split_at(line.find(' ').unwrap());
+        let folded_groups: Vec<usize> = groups[1..]
             .split(',')
             .map(FromStr::from_str)
             .flatten()
             .collect();
 
-        let placements = place_all_groups(line, &groups);
-        let count = placements.len();
+        let unfolded_line: String = repeat([folded_line, "?"]).flatten().take(9).collect();
+        let unfolded_groups: Vec<usize> = repeat(folded_groups.clone()).take(5).flatten().collect();
 
-        for placement in placements {
-            println!("{}", render(&placement, &groups, line.len()));
-        }
-        println!("{count}");
+        let folded_placements = place_all_groups(folded_line, &folded_groups);
+        let folded_count = folded_placements.len();
+        println!("folded: {folded_count}");
 
-        count
+        let unfolded_placements = place_all_groups(&unfolded_line, &unfolded_groups);
+        let unfolded_count = unfolded_placements.len();
+        println!("unfolded: {unfolded_count}");
+
+        // for placement in folded_placements {
+        //     println!("{}", render(&placement, &groups, line.len()));
+        // }
+
+        (folded_count, unfolded_count)
     })
     .iter()
-    .sum();
+    .fold((0, 0), |l, r| (l.0 + r.0, l.1 + r.1));
 
-    println!("part1: {}", sum);
+    println!("part1: {}", folded_sum);
+    println!("part2: {}", unfolded_sum);
 }
