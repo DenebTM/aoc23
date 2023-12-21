@@ -15,10 +15,10 @@ pub struct Beam {
 }
 
 impl Beam {
-    pub fn start() -> Self {
+    pub fn new(pos: impl Into<Pos>, dir: BeamDir) -> Self {
         Self {
-            pos: (0, 0).into(),
-            dir: BeamDir::Right,
+            pos: pos.into(),
+            dir,
         }
     }
 

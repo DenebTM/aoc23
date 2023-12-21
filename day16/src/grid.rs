@@ -8,6 +8,7 @@ use crate::{
     tile::Tile,
 };
 
+#[derive(Clone)]
 pub struct Grid {
     tiles: Vec<Vec<Tile>>,
 }

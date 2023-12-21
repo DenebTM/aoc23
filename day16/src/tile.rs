@@ -2,6 +2,7 @@ use std::{collections::HashSet, fmt::Display};
 
 use crate::beam::{Beam, BeamDir};
 
+#[derive(Clone, Copy)]
 pub enum TileKind {
     Empty,      // .
     MirrorNWSE, // /
@@ -39,6 +40,7 @@ impl Display for TileKind {
     }
 }
 
+#[derive(Clone)]
 pub struct Tile {
     kind: TileKind,
     energized_dirs: HashSet<BeamDir>,

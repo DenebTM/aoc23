@@ -8,7 +8,7 @@ use std::io;
 use beam::Beam;
 use grid::Grid;
 
-use crate::grid::GridWithBeams;
+use crate::{beam::BeamDir, grid::GridWithBeams};
 
 #[allow(dead_code)]
 fn stdio_each<T>(func: impl Fn(&str, usize) -> T) -> Vec<T> {
@@ -41,52 +41,27 @@ fn stdio_lines_trimmed() -> Vec<String> {
         .collect()
 }
 
-fn print_grid(grid: &Grid, beams: &Vec<Beam>, enable_output: bool) {
-    if enable_output {
-        let grid_with_beams = GridWithBeams(&grid, &beams);
-        print!("\n{grid_with_beams}");
-        let _ = io::stdin().read_line(&mut String::new()).unwrap();
-    }
-}
-
-fn main() {
-    let enable_output = std::env::args()
-        .collect::<Vec<_>>()
-        .contains(&"--output".to_string());
-
-    let input = stdio_lines_trimmed();
-    let mut grid = Grid::from(input);
-
-    let mut beams: Vec<Beam> = vec![Beam::start()];
-
-    // relevant for printing
-    let mut num_active_beams = beams.len();
-    let mut do_print = false;
-    print_grid(&grid, &beams, enable_output); // print initial state
+fn get_energized_tile_count(init_grid: &Grid, init_beam: Beam) -> usize {
+    let mut grid = init_grid.clone();
+    let mut beams: Vec<Beam> = vec![init_beam];
 
     while beams.len() > 0 {
         let beam = beams.remove(0);
-
-        // only print after advancing each currently active beam one step
-        if num_active_beams == 0 {
-            do_print = true;
-            num_active_beams = beams.len();
-        } else {
-            num_active_beams -= 1;
-        }
 
         if let Some(tile) = grid.at(beam.pos) {
             let new_beams = tile.beam_result(&beam);
             beams.extend(new_beams);
         }
-
-        if do_print {
-            print_grid(&grid, &beams, enable_output);
-            do_print = false;
-        }
     }
 
-    let energized_count = grid.energized_count();
+    grid.energized_count()
+}
 
+fn main() {
+    let input = stdio_lines_trimmed();
+    let grid = Grid::from(input);
+
+    let part1_beam = Beam::new((0, 0), BeamDir::Right);
+    let energized_count = get_energized_tile_count(&grid, part1_beam);
     println!("part1: {}", energized_count);
 }
