@@ -46,14 +46,16 @@ fn main() {
     let mut grid = Grid::from(input);
 
     let mut beams: Vec<Beam> = vec![Beam::start()];
+
+    // relevant for printing
     let mut num_active_beams = beams.len();
     let mut do_print = false;
-
     let stdin = io::stdin();
 
     while beams.len() > 0 {
         let beam = beams.remove(0);
 
+        // only print after advancing each currently active beam one step
         if num_active_beams == 0 {
             do_print = true;
             num_active_beams = beams.len();
