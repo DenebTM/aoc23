@@ -44,9 +44,7 @@ fn placements(line: &str, group_len: usize) -> HashSet<usize> {
         let subline = &line[start..];
 
         // found contiguous [#?] group
-        if (0..group_len)
-            .map(move |ind| subline.chars().nth(ind))
-            .flatten()
+        if subline[..group_len].chars()
             .all(move |ch| matches!(ch, '#' | '?'))
             // at the start of the string, or preceded by a . or ?
             && (start == 0 || matches!(line.chars().nth(start - 1), Some('.') | Some('?')))
@@ -239,9 +237,9 @@ fn main() {
             // println!("folded: {folded_count}");
 
             let unfiltered = place_groups_unfiltered(&unfolded_line, &unfolded_groups);
-            let unfolded_placements = unfiltered
-                .iter()
-                .filter(move |&placement| has_all_fixed(placement, &unfolded_groups, line));
+            let unfolded_placements = unfiltered.iter().filter(move |&placement| {
+                has_all_fixed(placement, &unfolded_groups, &unfolded_line)
+            });
             let unfolded_count = unfolded_placements.count();
             println!("unfolded: {unfolded_count}");
 
