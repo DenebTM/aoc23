@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashSet, fmt::Display};
 
 use crate::beam::{Beam, BeamDir};
 
@@ -41,7 +41,7 @@ impl Display for TileKind {
 
 pub struct Tile {
     kind: TileKind,
-    energized_dirs: Vec<BeamDir>,
+    energized_dirs: HashSet<BeamDir>,
 }
 
 impl Display for Tile {
@@ -58,7 +58,7 @@ impl Tile {
     pub fn new(ch: char) -> Self {
         Self {
             kind: TileKind::from(ch),
-            energized_dirs: Vec::new(),
+            energized_dirs: HashSet::new(),
         }
     }
 
@@ -96,7 +96,7 @@ impl Tile {
         .copied()
         .collect();
 
-        self.energized_dirs.push(beam.dir);
+        self.energized_dirs.insert(beam.dir);
 
         new_beams
     }

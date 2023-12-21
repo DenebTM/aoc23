@@ -1,6 +1,6 @@
 use crate::pos::Pos;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BeamDir {
     Up,
     Right,
