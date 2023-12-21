@@ -29,26 +29,6 @@ impl From<Vec<String>> for Grid {
     }
 }
 
-impl Display for Grid {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // for line in &self.tiles {
-        //     for tile in line {
-        //         write!(f, "{tile}")?;
-        //     }
-
-        //     write!(f, "\n")?;
-        // }
-
-        // Ok(())
-
-        self.tiles.iter().fold(Ok(()), |_, line| {
-            line.iter()
-                .fold(Ok(()), |_, tile| write!(f, "{tile}"))
-                .and(write!(f, "\n"))
-        })
-    }
-}
-
 impl Grid {
     pub fn at(&mut self, pos: Pos) -> Option<&mut Tile> {
         let (x, y): (usize, usize) = pos.into();
@@ -80,7 +60,7 @@ impl<'a> Display for GridWithBeams<'a> {
                         BeamDir::Up => Color::BrightRed,
                         BeamDir::Right => Color::BrightGreen,
                         BeamDir::Down => Color::BrightBlue,
-                        BeamDir::Left => Color::Yellow,
+                        BeamDir::Left => Color::BrightMagenta,
                     });
                 }
             }

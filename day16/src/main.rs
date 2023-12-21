@@ -41,6 +41,12 @@ fn stdio_lines_trimmed() -> Vec<String> {
         .collect()
 }
 
+fn print_grid(grid: &Grid, beams: &Vec<Beam>) {
+    let grid_with_beams = GridWithBeams(&grid, &beams);
+    print!("\n{grid_with_beams}");
+    let _ = io::stdin().read_line(&mut String::new()).unwrap();
+}
+
 fn main() {
     let input = stdio_lines_trimmed();
     let mut grid = Grid::from(input);
@@ -50,7 +56,7 @@ fn main() {
     // relevant for printing
     let mut num_active_beams = beams.len();
     let mut do_print = false;
-    let stdin = io::stdin();
+    print_grid(&grid, &beams); // print initial state
 
     while beams.len() > 0 {
         let beam = beams.remove(0);
@@ -69,9 +75,7 @@ fn main() {
         }
 
         if do_print {
-            let grid_with_beams = GridWithBeams(&grid, &beams);
-            print!("\n{grid_with_beams}");
-            let _ = stdin.read_line(&mut String::new()).unwrap();
+            print_grid(&grid, &beams);
             do_print = false;
         }
     }
