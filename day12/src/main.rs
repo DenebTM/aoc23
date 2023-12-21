@@ -132,7 +132,7 @@ fn place_groups_unfiltered(line: &str, groups: &[usize]) -> HashSet<Vec<usize>> 
                     if rest_start >= line.len() {
                         vec![]
                     } else {
-                        let following = place_all_groups(&line[rest_start..], &groups[1..]);
+                        let following = place_groups_unfiltered(&line[rest_start..], &groups[1..]);
 
                         following
                             .iter()
