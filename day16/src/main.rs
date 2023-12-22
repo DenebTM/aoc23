@@ -3,12 +3,10 @@ mod grid;
 mod pos;
 mod tile;
 
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::io;
 
 use beam::{Beam, BeamDir};
 use grid::Grid;
-use pos::Pos;
 
 #[allow(dead_code)]
 fn stdio_each<T>(func: impl Fn(&str, usize) -> T) -> Vec<T> {
@@ -67,32 +65,26 @@ fn main() {
     let energized_count = get_energized_tile_count(&grid, part1_beam);
     println!("part1: {}", energized_count);
 
-    let part2_beams: Vec<Beam> = (0..=final_row)
-        .map(|y| {
-            (0..=final_col)
-                .map(|x| {
-                    let pos = (x, y);
-                    let mut dirs = Vec::new();
-                    if x == 0 {
-                        dirs.push(BeamDir::Right)
-                    } else if x == final_col {
-                        dirs.push(BeamDir::Left)
-                    }
-                    if y == 0 {
-                        dirs.push(BeamDir::Down)
-                    } else if y == final_col {
-                        dirs.push(BeamDir::Up)
-                    }
-
-                    dirs.iter()
-                        .map(|&dir| Beam::new(Pos::from(pos), dir))
-                        .collect::<Vec<_>>()
-                })
-                .flatten()
-                .collect::<Vec<_>>()
-        })
-        .flatten()
-        .collect();
+    let part2_beams = [
+        (0..final_row)
+            .map(|row| {
+                [
+                    Beam::new((0, row), BeamDir::Right),
+                    Beam::new((final_col, row), BeamDir::Left),
+                ]
+            })
+            .collect::<Vec<_>>(),
+        (0..final_col)
+            .map(|col| {
+                [
+                    Beam::new((col, 0), BeamDir::Down),
+                    Beam::new((col, final_row), BeamDir::Up),
+                ]
+            })
+            .collect(),
+    ]
+    .concat()
+    .concat();
 
     let max_energized_count = part2_beams
         .iter()
