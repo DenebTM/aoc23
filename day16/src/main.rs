@@ -95,7 +95,7 @@ fn main() {
         .collect();
 
     let max_energized_count = part2_beams
-        .par_iter()
+        .iter()
         .map(|&beam| get_energized_tile_count(&grid, beam))
         .max()
         .unwrap_or(0);
