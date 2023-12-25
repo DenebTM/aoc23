@@ -2,7 +2,10 @@ mod grid;
 mod pos;
 mod tile;
 
-use std::io;
+use std::{io, thread::sleep, time::Duration};
+
+use pos::{Dir, Pos};
+use tile::Tile;
 
 use crate::{grid::Grid, tile::TileKind};
 
@@ -37,28 +40,62 @@ fn stdio_lines_trimmed() -> Vec<String> {
         .collect()
 }
 
+fn tilt(grid: Grid, dir: Dir) -> Grid {
+    let mut grid = grid;
+
+    let mut round_rocks = grid.get_round_rocks();
+    round_rocks.sort();
+
+    for tile in round_rocks {
+        let mut new_pos = tile.pos;
+        while grid.at(new_pos + dir).map(|tile| tile.kind) == Some(TileKind::Empty) {
+            new_pos += dir;
+        }
+
+        grid = grid.move_tile(tile.pos, new_pos);
+    }
+
+    grid
+}
+
+fn north_load(grid: &Grid) -> usize {
+    grid.get_round_rocks()
+        .iter()
+        .map(|Tile { pos: Pos(_, y), .. }| grid.height - (*y as usize))
+        .sum()
+}
+
+fn spin_cycle(grid: Grid) -> Grid {
+    tilt(
+        tilt(tilt(tilt(grid, Dir::NORTH), Dir::WEST), Dir::SOUTH),
+        Dir::EAST,
+    )
+}
+
 fn main() {
     let input = stdio_lines_trimmed();
     let grid = Grid::from(input);
 
-    let mut grid_north = grid.clone();
-    let mut part1_sum = 0;
-
-    let mut round_rocks = grid_north.get_round_rocks();
-    round_rocks.sort();
-
-    // move all round rocks as far north as possible
-    for tile in round_rocks {
-        let mut new_pos = tile.pos;
-        while grid_north.at(new_pos - (0, 1)).map(|tile| tile.kind) == Some(TileKind::Empty) {
-            new_pos -= (0, 1);
-        }
-
-        grid_north = grid_north.move_tile(tile.pos, new_pos);
-        part1_sum += grid.height - (new_pos.1 as usize);
-    }
-
+    let grid_north = tilt(grid.clone(), Dir::NORTH);
+    let part1_sum = north_load(&grid_north);
     println!("\n{grid_north}");
-
     println!("part1: {part1_sum}");
+
+    sleep(Duration::from_millis(1000));
+
+    let mut grid_spun = grid;
+    for cycle in 1..=1_000_000_000 {
+        println!("Cycle {cycle}/1,000,000,000");
+
+        let new_grid = spin_cycle(grid_spun.clone());
+        if grid_spun == new_grid {
+            break;
+        } else {
+            grid_spun = new_grid;
+        }
+    }
+    let part2_sum = north_load(&grid_spun);
+
+    println!("\n{grid_spun}");
+    println!("part2: {part2_sum}");
 }

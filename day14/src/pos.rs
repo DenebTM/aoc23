@@ -34,6 +34,12 @@ impl std::ops::Add<(isize, isize)> for Pos {
         Self(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
+impl std::ops::AddAssign for Pos {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+    }
+}
 impl std::ops::AddAssign<(isize, isize)> for Pos {
     fn add_assign(&mut self, rhs: (isize, isize)) {
         self.0 += rhs.0;

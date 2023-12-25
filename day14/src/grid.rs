@@ -5,7 +5,7 @@ use crate::{
     tile::{Tile, TileKind},
 };
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Grid {
     pub width: usize,
     pub height: usize,
