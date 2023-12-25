@@ -59,7 +59,13 @@ impl Grid {
         } = self;
         tiles.get(&pos).copied().map(|tile| {
             tiles.remove(&pos);
-            tiles.insert(new_pos, tile.clone());
+            tiles.insert(
+                new_pos,
+                Tile {
+                    kind: tile.kind,
+                    pos: new_pos,
+                },
+            );
         });
 
         Self {
