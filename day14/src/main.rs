@@ -4,6 +4,8 @@ mod tile;
 
 use std::{collections::HashMap, io};
 
+use crate::{grid::Grid, pos::Dir, tile::TileKind};
+
 #[allow(dead_code)]
 fn stdio_each<T>(func: impl Fn(&str, usize) -> T) -> Vec<T> {
     let mut output = Vec::new();
@@ -37,6 +39,15 @@ fn stdio_lines_trimmed() -> Vec<String> {
 
 fn main() {
     let input = stdio_lines_trimmed();
+    let grid = Grid::from(input);
+
+    // move all round rocks as far north as possible
+    let mut grid_north = grid.clone();
+    for tile in grid_north.get_round_rocks() {
+        while grid.at(tile.pos - (0, 1)).map(|tile| tile.kind) == Some(TileKind::Empty) {
+            tile.pos -= (0, 1);
+        }
+    }
 
     let mut part1_sum = 0;
 

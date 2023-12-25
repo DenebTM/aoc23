@@ -32,6 +32,12 @@ impl std::ops::Add<(isize, isize)> for Pos {
         Self(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
+impl std::ops::AddAssign<(isize, isize)> for Pos {
+    fn add_assign(&mut self, rhs: (isize, isize)) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+    }
+}
 
 impl std::ops::Neg for Pos {
     type Output = Self;
@@ -62,6 +68,19 @@ impl<'a> std::ops::Sub for &'a Pos {
     fn sub(self, rhs: Self) -> Self::Output {
         use std::ops::Add;
         self.clone().add(-rhs.clone())
+    }
+}
+impl std::ops::Sub<(isize, isize)> for Pos {
+    type Output = Self;
+
+    fn sub(self, rhs: (isize, isize)) -> Self::Output {
+        Self(self.0 - rhs.0, self.1 - rhs.1)
+    }
+}
+impl std::ops::SubAssign<(isize, isize)> for Pos {
+    fn sub_assign(&mut self, rhs: (isize, isize)) {
+        self.0 -= rhs.0;
+        self.1 -= rhs.1;
     }
 }
 

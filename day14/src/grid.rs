@@ -26,9 +26,9 @@ impl From<Vec<String>> for Grid {
 }
 
 impl Grid {
-    pub fn at(&mut self, pos: Pos) -> Option<&mut Tile> {
+    pub fn at(&self, pos: Pos) -> Option<&Tile> {
         let (x, y): (usize, usize) = pos.into();
-        self.tiles.get_mut(y).map(|line| line.get_mut(x)).flatten()
+        self.tiles.get(y).map(|line| line.get(x)).flatten()
     }
 
     pub fn get_tiles_of_kind(&mut self, kind: TileKind) -> impl Iterator<Item = &mut Tile> {
@@ -38,7 +38,7 @@ impl Grid {
             .filter(move |tile| tile.kind == kind)
     }
 
-    pub fn get_round_rocks(&mut self, kind: TileKind) -> impl Iterator<Item = &mut Tile> {
+    pub fn get_round_rocks(&mut self) -> impl Iterator<Item = &mut Tile> {
         self.get_tiles_of_kind(TileKind::RoundRock)
     }
 }
