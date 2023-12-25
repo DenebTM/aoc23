@@ -1,4 +1,4 @@
-use std::io;
+use std::{collections::HashMap, io};
 
 #[allow(dead_code)]
 fn stdio_each<T>(func: impl Fn(&str, usize) -> T) -> Vec<T> {
@@ -31,59 +31,77 @@ fn stdio_lines_trimmed() -> Vec<String> {
         .collect()
 }
 
-fn find_horiz_reflection(grid: &[String]) -> Option<usize> {
+fn find_horiz_reflections(grid: &[String]) -> HashMap<usize, usize> {
     let width = grid[0].len();
 
-    'outer: for x in 1..width {
-        for line in grid {
-            let (left, right) = line.split_at(x);
-            for (ch1, ch2) in left.chars().rev().zip(right.chars()) {
-                if ch1 != ch2 {
-                    continue 'outer;
+    (1..width)
+        .map(|x| {
+            let mut diff = 0;
+            for line in grid {
+                let (left, right) = line.split_at(x);
+                for (ch1, ch2) in left.chars().rev().zip(right.chars()) {
+                    if ch1 != ch2 {
+                        diff += 1;
+                    }
                 }
             }
-        }
 
-        return Some(x);
-    }
-
-    None
+            (diff, x)
+        })
+        .collect()
 }
 
-fn find_vert_reflection(grid: &[String]) -> Option<usize> {
+fn find_vert_reflections(grid: &[String]) -> HashMap<usize, usize> {
     let height = grid.len();
 
-    'outer: for y in 1..height {
-        let (top, bottom) = grid.split_at(y);
-        for (l1, l2) in top.iter().rev().zip(bottom.iter()) {
-            if l1 != l2 {
-                continue 'outer;
+    (1..height)
+        .map(|y| {
+            let mut diff = 0;
+
+            let (top, bottom) = grid.split_at(y);
+            for (l1, l2) in top.iter().rev().zip(bottom.iter()) {
+                for (ch1, ch2) in l1.chars().zip(l2.chars()) {
+                    if ch1 != ch2 {
+                        diff += 1;
+                    }
+                }
             }
-        }
 
-        return Some(y);
-    }
-
-    None
+            (diff, y)
+        })
+        .collect()
 }
 
 fn main() {
     let input = stdio_lines_trimmed();
     let groups: Vec<&[String]> = input.split(|line| line.len() == 0).collect();
 
-    let mut sum = 0;
+    let mut part1_sum = 0;
+    let mut part2_sum = 0;
 
     for (n, group) in groups.iter().enumerate() {
-        let reflect_h = find_horiz_reflection(group);
-        let reflect_v = find_vert_reflection(group);
+        let reflect_h = find_horiz_reflections(group);
+        let reflect_v = find_vert_reflections(group);
 
-        let part = reflect_h.or(reflect_v.map(|v| v * 100)).expect(&format!(
-            "Found no reflection in group {}/{}",
-            n + 1,
-            groups.len(),
-        ));
-        sum += part;
+        let get_reflection = |diff: &usize| {
+            reflect_h
+                .get(diff)
+                .map(|h| *h)
+                .or(reflect_v.get(diff).map(|v| v * 100))
+                .expect(&format!(
+                    "Found no reflection with difference {diff} in group {}/{}",
+                    n + 1,
+                    groups.len(),
+                ))
+        };
+
+        let part1_part = get_reflection(&0);
+        let part2_part = get_reflection(&1);
+
+        part1_sum += part1_part;
+        part2_sum += part2_part;
     }
 
-    println!("part1: {sum}");
+    println!("part1: {part1_sum}");
+    println!("part2: {part2_sum}");
 }
