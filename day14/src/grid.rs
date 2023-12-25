@@ -42,7 +42,11 @@ impl From<Vec<String>> for Grid {
 
 impl Grid {
     pub fn at(&self, pos: Pos) -> Option<Tile> {
-        if pos >= (0, 0).into() && pos <= (self.width, self.height).into() {
+        if pos.0 >= 0
+            && pos.1 >= 0
+            && pos.0 < (self.width as isize)
+            && pos.1 < (self.height as isize)
+        {
             self.tiles.get(&pos).copied().or(Some(Tile {
                 kind: TileKind::Empty,
                 pos,

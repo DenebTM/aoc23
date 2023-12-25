@@ -2,7 +2,7 @@ mod grid;
 mod pos;
 mod tile;
 
-use std::{io, thread::sleep, time::Duration};
+use std::{cmp::Ordering, io, thread::sleep, time::Duration};
 
 use pos::{Dir, Pos};
 use tile::Tile;
@@ -44,7 +44,19 @@ fn tilt(grid: Grid, dir: Dir) -> Grid {
     let mut grid = grid;
 
     let mut round_rocks = grid.get_round_rocks();
-    round_rocks.sort();
+    round_rocks.sort_by(|Tile { pos: pos1, .. }, Tile { pos: pos2, .. }| {
+        if pos1 == pos2 {
+            Ordering::Equal
+        } else if (dir == Dir::NORTH && pos1.1 < pos2.1)
+            || (dir == Dir::EAST && pos1.0 > pos2.0)
+            || (dir == Dir::SOUTH && pos1.1 > pos2.1)
+            || (dir == Dir::WEST && pos1.0 < pos2.0)
+        {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
+    });
 
     for tile in round_rocks {
         let mut new_pos = tile.pos;
@@ -66,10 +78,12 @@ fn north_load(grid: &Grid) -> usize {
 }
 
 fn spin_cycle(grid: Grid) -> Grid {
-    tilt(
-        tilt(tilt(tilt(grid, Dir::NORTH), Dir::WEST), Dir::SOUTH),
-        Dir::EAST,
-    )
+    let north = tilt(grid, Dir::NORTH);
+    let east = tilt(north, Dir::EAST);
+    let south = tilt(east, Dir::SOUTH);
+    let west = tilt(south, Dir::WEST);
+
+    west
 }
 
 fn main() {
