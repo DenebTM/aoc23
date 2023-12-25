@@ -5,7 +5,6 @@ mod tile;
 use std::{cmp::Ordering, io, thread::sleep, time::Duration};
 
 use pos::{Dir, Pos};
-use tile::Tile;
 
 use crate::{grid::Grid, tile::TileKind};
 
@@ -43,8 +42,8 @@ fn stdio_lines_trimmed() -> Vec<String> {
 fn tilt(grid: Grid, dir: Dir) -> Grid {
     let mut grid = grid;
 
-    let mut round_rocks = grid.get_round_rocks();
-    round_rocks.sort_by(|Tile { pos: pos1, .. }, Tile { pos: pos2, .. }| {
+    let mut round_rocks: Vec<Pos> = grid.get_round_rocks();
+    round_rocks.sort_by(|pos1, pos2| {
         if pos1 == pos2 {
             Ordering::Equal
         } else if (dir == Dir::NORTH && pos1.1 < pos2.1)
@@ -58,13 +57,12 @@ fn tilt(grid: Grid, dir: Dir) -> Grid {
         }
     });
 
-    for tile in round_rocks {
-        let mut new_pos = tile.pos;
-        while grid.at(new_pos + dir).map(|tile| tile.kind) == Some(TileKind::Empty) {
+    for old_pos in round_rocks {
+        let mut new_pos = old_pos;
+        while grid.at(new_pos + dir).map(|tile_kind| tile_kind) == Some(TileKind::Empty) {
             new_pos += dir;
         }
-
-        grid = grid.move_tile(tile.pos, new_pos);
+        grid = grid.move_rock(old_pos, new_pos);
     }
 
     grid
@@ -73,7 +71,7 @@ fn tilt(grid: Grid, dir: Dir) -> Grid {
 fn north_load(grid: &Grid) -> usize {
     grid.get_round_rocks()
         .iter()
-        .map(|Tile { pos: Pos(_, y), .. }| grid.height - (*y as usize))
+        .map(|Pos(_, y)| grid.height - (*y as usize))
         .sum()
 }
 

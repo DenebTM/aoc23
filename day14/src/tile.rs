@@ -1,7 +1,5 @@
 use std::fmt::Display;
 
-use crate::pos::Pos;
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum TileKind {
     Empty,     // .
@@ -31,26 +29,5 @@ impl From<&TileKind> for char {
 impl Display for TileKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", char::from(self))
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Tile {
-    pub kind: TileKind,
-    pub pos: Pos,
-}
-
-impl Display for Tile {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.kind.fmt(f)
-    }
-}
-
-impl Tile {
-    pub fn new(ch: char, pos: impl Into<Pos>) -> Self {
-        Self {
-            kind: TileKind::from(ch),
-            pos: pos.into(),
-        }
     }
 }
