@@ -46,17 +46,6 @@ impl Display for Tile {
     }
 }
 
-impl PartialOrd for Tile {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.pos.partial_cmp(&other.pos)
-    }
-}
-impl Ord for Tile {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.pos.cmp(&other.pos)
-    }
-}
-
 impl Tile {
     pub fn new(ch: char, pos: impl Into<Pos>) -> Self {
         Self {

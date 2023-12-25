@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Pos(pub isize, pub isize);
 impl From<(usize, usize)> for Pos {
@@ -89,25 +87,6 @@ impl std::ops::SubAssign<(isize, isize)> for Pos {
     fn sub_assign(&mut self, rhs: (isize, isize)) {
         self.0 -= rhs.0;
         self.1 -= rhs.1;
-    }
-}
-
-impl PartialOrd for Pos {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(
-            if self.1 < other.1 || (self.1 == other.1 && self.0 < other.0) {
-                Ordering::Less
-            } else if self == other {
-                Ordering::Equal
-            } else {
-                Ordering::Greater
-            },
-        )
-    }
-}
-impl Ord for Pos {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
     }
 }
 
