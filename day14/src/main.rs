@@ -79,9 +79,9 @@ fn north_load(grid: &Grid) -> usize {
 
 fn spin_cycle(grid: Grid) -> Grid {
     let north = tilt(grid, Dir::NORTH);
-    let east = tilt(north, Dir::EAST);
+    let east = tilt(north, Dir::WEST);
     let south = tilt(east, Dir::SOUTH);
-    let west = tilt(south, Dir::WEST);
+    let west = tilt(south, Dir::EAST);
 
     west
 }
