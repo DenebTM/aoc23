@@ -72,20 +72,22 @@ impl Path {
             .filter_map(|(next_dir, next_pos, next_cost)| {
                 // don't go in the same direction for more than three tiles,
                 // and don't go backwards either
-                if Some(-next_dir) == self.last_dir {
+                if Some(-next_dir) == self.last_dir
+                    || Some(next_dir) == self.last_dir && self.straight_line >= 3
+                {
                     None
                 } else {
-                    if Some(next_dir) == self.last_dir && self.straight_line >= 3 {
-                        None
-                    } else {
-                        Some(Self {
-                            path: [self.path.clone(), vec![next_pos]].concat(),
-                            total_cost: self.total_cost + next_cost as usize,
-                            last_dir: Some(next_dir),
-                            straight_line: self.straight_line + 1,
-                            end: self.end,
-                        })
-                    }
+                    Some(Self {
+                        path: [self.path.clone(), vec![next_pos]].concat(),
+                        total_cost: self.total_cost + next_cost as usize,
+                        last_dir: Some(next_dir),
+                        straight_line: if Some(next_dir) == self.last_dir {
+                            self.straight_line + 1
+                        } else {
+                            1
+                        },
+                        end: self.end,
+                    })
                 }
             })
             .collect()
