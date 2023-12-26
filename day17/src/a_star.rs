@@ -1,4 +1,4 @@
-use std::collections::BinaryHeap;
+use std::{collections::BinaryHeap, rc::Rc};
 
 use crate::{
     grid::Grid,
@@ -11,7 +11,8 @@ fn heur(pos: Pos, end: Pos) -> usize {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Path {
-    pub path: Vec<Pos>,
+    pub pos: Pos,
+    pub pred: Option<Rc<Path>>,
     pub total_cost: usize,
 
     last_dir: Option<Dir>,
@@ -23,8 +24,8 @@ pub struct Path {
 /// this ordering is reversed so that in a priority queue, the path with the lowest cost is returned first
 impl PartialOrd for Path {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        (self.total_cost + heur(*self.last(), self.end))
-            .partial_cmp(&(other.total_cost + heur(*other.last(), other.end)))
+        (self.total_cost + heur(self.pos, self.end))
+            .partial_cmp(&(other.total_cost + heur(other.pos, other.end)))
             .map(|ord| ord.reverse())
     }
 }
@@ -37,7 +38,8 @@ impl Ord for Path {
 impl Path {
     fn new(start: Pos, end: Pos) -> Self {
         Self {
-            path: [start].into(),
+            pos: start,
+            pred: None,
             total_cost: 0,
             last_dir: None,
             straight_line: 0,
@@ -45,30 +47,30 @@ impl Path {
         }
     }
 
-    fn last(&self) -> &Pos {
-        self.path.last().unwrap()
-    }
-
-    fn successors(&self, grid: &Grid) -> Vec<Path> {
-        grid.neighbours(*self.last())
+    fn successors(self, grid: &Grid) -> Vec<Path> {
+        let s = Rc::new(self);
+        grid.neighbours(s.pos)
             .filter_map(|(next_dir, next_pos, &next_cost)| {
+                let s = s.clone();
+
                 // don't go in the same direction for more than three tiles,
                 // and don't go backwards either
-                if Some(-next_dir) == self.last_dir
-                    || Some(next_dir) == self.last_dir && self.straight_line >= 3
+                if Some(-next_dir) == s.last_dir
+                    || Some(next_dir) == s.last_dir && s.straight_line >= 3
                 {
                     None
                 } else {
                     Some(Self {
-                        path: [self.path.clone(), vec![next_pos]].concat(),
-                        total_cost: self.total_cost + next_cost as usize,
+                        pos: next_pos,
+                        pred: Some(s.clone()),
+                        total_cost: s.total_cost + next_cost as usize,
                         last_dir: Some(next_dir),
-                        straight_line: if Some(next_dir) == self.last_dir {
-                            self.straight_line + 1
+                        straight_line: if Some(next_dir) == s.last_dir {
+                            s.straight_line + 1
                         } else {
                             1
                         },
-                        end: self.end,
+                        end: s.end,
                     })
                 }
             })
@@ -83,7 +85,7 @@ pub fn a_star(grid: &Grid, start: Pos, end: Pos) -> Option<Path> {
     let mut found_path: Option<Path> = None;
     while open_set.len() > 0 {
         let path = open_set.pop().unwrap();
-        if path.last() == &end {
+        if path.pos == end {
             found_path = Some(path);
             break;
         }
