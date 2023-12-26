@@ -1,13 +1,13 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Pos(pub isize, pub isize);
+pub struct Pos(pub i32, pub i32);
 impl From<(usize, usize)> for Pos {
     fn from((x, y): (usize, usize)) -> Self {
-        Pos(x as isize, y as isize)
+        Pos(x as i32, y as i32)
     }
 }
-impl Into<(usize, usize)> for Pos {
-    fn into(self) -> (usize, usize) {
-        (self.0 as usize, self.1 as usize)
+impl Into<(i32, i32)> for Pos {
+    fn into(self) -> (i32, i32) {
+        (self.0 as i32, self.1 as i32)
     }
 }
 
@@ -25,10 +25,10 @@ impl<'a> std::ops::Add for &'a Pos {
         self.clone() + rhs.clone()
     }
 }
-impl std::ops::Add<(isize, isize)> for Pos {
+impl std::ops::Add<(i32, i32)> for Pos {
     type Output = Self;
 
-    fn add(self, rhs: (isize, isize)) -> Self::Output {
+    fn add(self, rhs: (i32, i32)) -> Self::Output {
         Self(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
@@ -38,8 +38,8 @@ impl std::ops::AddAssign for Pos {
         self.1 += rhs.1;
     }
 }
-impl std::ops::AddAssign<(isize, isize)> for Pos {
-    fn add_assign(&mut self, rhs: (isize, isize)) {
+impl std::ops::AddAssign<(i32, i32)> for Pos {
+    fn add_assign(&mut self, rhs: (i32, i32)) {
         self.0 += rhs.0;
         self.1 += rhs.1;
     }
@@ -76,15 +76,15 @@ impl<'a> std::ops::Sub for &'a Pos {
         self.clone().add(-rhs.clone())
     }
 }
-impl std::ops::Sub<(isize, isize)> for Pos {
+impl std::ops::Sub<(i32, i32)> for Pos {
     type Output = Self;
 
-    fn sub(self, rhs: (isize, isize)) -> Self::Output {
+    fn sub(self, rhs: (i32, i32)) -> Self::Output {
         Self(self.0 - rhs.0, self.1 - rhs.1)
     }
 }
-impl std::ops::SubAssign<(isize, isize)> for Pos {
-    fn sub_assign(&mut self, rhs: (isize, isize)) {
+impl std::ops::SubAssign<(i32, i32)> for Pos {
+    fn sub_assign(&mut self, rhs: (i32, i32)) {
         self.0 -= rhs.0;
         self.1 -= rhs.1;
     }

@@ -5,18 +5,19 @@ use crate::{
     pos::{Dir, Pos},
 };
 
-fn heur(pos: Pos, end: Pos) -> usize {
-    ((end.0 - pos.0).abs() + (end.1 - pos.1).abs()) as usize
+#[inline(always)]
+fn heur(pos: Pos, end: Pos) -> i32 {
+    ((end.0 - pos.0).abs() + (end.1 - pos.1).abs()) as i32
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Path {
     pub pos: Pos,
     pub pred: Option<Rc<Path>>,
-    pub total_cost: usize,
+    pub total_cost: i32,
 
     last_dir: Option<Dir>,
-    straight_line: usize,
+    straight_line: i32,
 
     end: Pos,
 }
@@ -63,7 +64,7 @@ impl Path {
                     Some(Self {
                         pos: next_pos,
                         pred: Some(s.clone()),
-                        total_cost: s.total_cost + next_cost as usize,
+                        total_cost: s.total_cost + next_cost as i32,
                         last_dir: Some(next_dir),
                         straight_line: if Some(next_dir) == s.last_dir {
                             s.straight_line + 1
