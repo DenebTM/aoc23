@@ -47,10 +47,10 @@ impl Path {
         }
     }
 
-    fn successors(self, grid: &Grid) -> Vec<Path> {
+    fn successors(self, grid: &Grid) -> impl Iterator<Item = Path> + '_ {
         let s = Rc::new(self);
         grid.neighbours(s.pos)
-            .filter_map(|(next_dir, next_pos, &next_cost)| {
+            .filter_map(move |(next_dir, next_pos, &next_cost)| {
                 let s = s.clone();
 
                 // don't go in the same direction for more than three tiles,
@@ -74,7 +74,6 @@ impl Path {
                     })
                 }
             })
-            .collect()
     }
 }
 
