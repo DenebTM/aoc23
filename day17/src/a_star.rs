@@ -80,7 +80,11 @@ impl Path {
                     cost: next_cost,
                 });
 
-                if Some(next_dir) == self.last_dir && self.straight_line >= 3 {
+                // don't go in the same direction for more than three tiles,
+                // and don't go backwards either
+                if Some(next_dir) == self.last_dir && self.straight_line >= 3
+                    || Some(next_dir) == self.last_dir.map(|dir| -dir)
+                {
                     None
                 } else {
                     Some(Self {
