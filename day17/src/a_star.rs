@@ -5,24 +5,6 @@ use crate::{
     pos::{Dir, Pos},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Node {
-    pos: Pos,
-    cost: u8,
-}
-
-/// this ordering is reversed so that in a priority queue, the node with the lowest cost is returned first
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.cost.partial_cmp(&other.cost).map(|ord| ord.reverse())
-    }
-}
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
-    }
-}
-
 fn heur(pos: Pos, end: Pos) -> usize {
     ((end.0 - pos.0).abs() + (end.1 - pos.1).abs()) as usize
 }
@@ -69,7 +51,7 @@ impl Path {
 
     fn successors(&self, grid: &Grid) -> Vec<Path> {
         grid.neighbours(*self.last())
-            .filter_map(|(next_dir, next_pos, next_cost)| {
+            .filter_map(|(next_dir, next_pos, &next_cost)| {
                 // don't go in the same direction for more than three tiles,
                 // and don't go backwards either
                 if Some(-next_dir) == self.last_dir
