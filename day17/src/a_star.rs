@@ -8,31 +8,26 @@ use crate::{
     pos::{Dir, Pos},
 };
 
-/**
- * Perhaps a better heuristic can be found?
- */
 #[inline(always)]
 fn heur(pos: Pos, end: Pos) -> i32 {
-    ((end.0 - pos.0).abs() + (end.1 - pos.1).abs()) as i32
+    ((end.0 - pos.0).abs() + (end.1 - pos.1).abs()) as i32 * 2
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Path {
-    pub pos: Pos,
-    // pub pred: Option<Rc<Path>>,
-    pub total_cost: i32,
-
-    last_dir: Dir,
-    straight_line: i32,
-
-    end: Pos,
+    current: Pos,               // current tip of path
+    pub prev: Option<Rc<Path>>, // allow reconstruction of the path
+    pub total_cost: i32,        // current path cost
+    last_dir: Dir,              // direction path last took
+    straight_line: i32,         // how long path has been going in the same direction
+    end: Pos,                   // final destination
 }
 
 /// this ordering is reversed so that in a priority queue, the path with the lowest cost is returned first
 impl PartialOrd for Path {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        (self.total_cost + heur(self.pos, self.end))
-            .partial_cmp(&(other.total_cost + heur(other.pos, other.end)))
+        (self.total_cost + heur(self.current, self.end))
+            .partial_cmp(&(other.total_cost + heur(other.current, other.end)))
             .map(|ord| ord.reverse())
     }
 }
@@ -45,8 +40,8 @@ impl Ord for Path {
 impl Path {
     fn new(start: Pos, end: Pos) -> Self {
         Self {
-            pos: start,
-            // pred: None,
+            current: start,
+            prev: None,
             total_cost: 0,
             last_dir: Dir::EAST,
             straight_line: 0,
@@ -54,54 +49,40 @@ impl Path {
         }
     }
 
-    /**
-     * TODO: This kind of works, but shows that A* is not designed for dynamic weights
-     *   1. Slow due to lack of memorization
-     *   2. Memorization does not take distance since last turn into account, so may miss more
-     *      optimal solutions
-     *
-     * Consider 4D positions:
-     *   x, z = 2D position
-     *   y, w = entering direction and how long the path has gone in a straight line
-     *
-     * Based on this, we can build a static weighted graph for A* to work on
-     * This will likely _also_ be slow though? As having 12 (4 [NESW] * 3 [distance since last turn])
-     * copies of each 2D position will make memorization less effective.
-     *
-     * Idea for >2D position from: https://stackoverflow.com/a/52187896
-     *
-     * Also: at this point i should really create a graph datastructure
-     */
     fn successors<'a>(
         self,
         grid: &'a Grid,
-        closed_set: &'a mut HashMap<Pos, i32>,
+        closed_set: &'a mut HashMap<(Pos, Dir, i32), i32>,
     ) -> impl Iterator<Item = Path> + 'a {
         let s = Rc::new(self);
-        grid.neighbours(s.pos)
+        grid.neighbours(s.current)
             .filter_map(move |(next_dir, next_pos, &next_cost)| {
                 let next_cost = s.total_cost + next_cost as i32;
+                let next_straight_line = if next_dir == s.last_dir {
+                    s.straight_line + 1
+                } else {
+                    1
+                };
 
-                // don't go in the same direction for more than three tiles,
-                // and don't go backwards either
-                if (closed_set.contains_key(&next_pos)
-                    && *closed_set.get(&next_pos).unwrap() <= next_cost - 2) // cost-2 => hack to get things working with the test input
+                let closed_set_key = (next_pos, next_dir, next_straight_line);
+
+                // don't revisit tiles, keep in mind the approach direction and straight line length
+                if (closed_set.contains_key(&closed_set_key)
+                    && *closed_set.get(&closed_set_key).unwrap() <= next_cost)
+                    // don't go backwards
                     || -next_dir == s.last_dir
+                    // don't go in the same direction for more than three tiles
                     || (s.straight_line >= 3 && next_dir == s.last_dir)
                 {
                     None
                 } else {
-                    closed_set.insert(next_pos, next_cost);
+                    closed_set.insert(closed_set_key, next_cost);
                     Some(Self {
-                        pos: next_pos,
-                        // pred: Some(s.clone()),
+                        current: next_pos,
+                        prev: Some(s.clone()),
                         total_cost: next_cost,
                         last_dir: next_dir,
-                        straight_line: if next_dir == s.last_dir {
-                            s.straight_line + 1
-                        } else {
-                            1
-                        },
+                        straight_line: next_straight_line,
                         end: s.end,
                     })
                 }
@@ -109,15 +90,25 @@ impl Path {
     }
 }
 
+/**
+ * `closed_set` performs "4D" memorization -- we remember:
+ * - if we've been at a position (x, y)
+ * - from a certain direction
+ * - after going in a straight line for 1, 2 or 3 steps
+ *
+ * This effectively turns the path costs static as far as A* is concerned.
+ *
+ * Partial credit for the idea goes to https://stackoverflow.com/a/52187896
+ */
 pub fn a_star(grid: &Grid, start: Pos, end: Pos) -> Option<Path> {
     let init_path = Path::new(start, end);
     let mut open_set = BinaryHeap::from([init_path]);
-    let mut closed_set = HashMap::from([(start, 0)]);
+    let mut closed_set = HashMap::from([((start, Dir::EAST, 0), 0)]);
 
     let mut found_path: Option<Path> = None;
     while open_set.len() > 0 {
         let path = open_set.pop().unwrap();
-        if path.pos == end {
+        if path.current == end {
             found_path = Some(path);
             break;
         }

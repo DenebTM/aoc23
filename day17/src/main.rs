@@ -48,5 +48,5 @@ fn main() {
         (grid.width() - 1, grid.height() - 1).into(),
     );
 
-    println!("part1: {path:#?}");
+    println!("part1: {:?}", path.map(|p| p.total_cost))
 }
