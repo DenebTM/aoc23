@@ -10,7 +10,7 @@ use crate::{
 
 #[inline(always)]
 fn heur(pos: Pos, end: Pos) -> i32 {
-    ((end.0 - pos.0).abs() + (end.1 - pos.1).abs()) as i32 * 2
+    ((end.0 - pos.0).abs() + (end.1 - pos.1).abs()) as i32
 }
 
 #[derive(Debug, PartialEq, Eq)]
