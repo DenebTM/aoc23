@@ -53,6 +53,8 @@ impl Path {
         self,
         grid: &'a Grid,
         closed_set: &'a mut HashMap<(Pos, Dir, i32), i32>,
+        min_straight: i32,
+        max_straight: i32,
     ) -> impl Iterator<Item = Path> + 'a {
         let s = Rc::new(self);
         grid.neighbours(s.current)
@@ -71,8 +73,10 @@ impl Path {
                     && *closed_set.get(&closed_set_key).unwrap() <= next_cost)
                     // don't go backwards
                     || -next_dir == s.last_dir
-                    // don't go in the same direction for more than three tiles
-                    || (s.straight_line >= 3 && next_dir == s.last_dir)
+                    // part2: go in the same direction for at least 4 tiles
+                    || (s.straight_line < min_straight && next_dir != s.last_dir)
+                    // part1: don't go in the same direction for more than 3 tiles (part2: 10)
+                    || (s.straight_line >= max_straight && next_dir == s.last_dir)
                 {
                     None
                 } else {
@@ -100,7 +104,13 @@ impl Path {
  *
  * Partial credit for the idea goes to https://stackoverflow.com/a/52187896
  */
-pub fn a_star(grid: &Grid, start: Pos, end: Pos) -> Option<Path> {
+pub fn a_star(
+    grid: &Grid,
+    start: Pos,
+    end: Pos,
+    min_straight: i32,
+    max_straight: i32,
+) -> Option<Path> {
     let init_path = Path::new(start, end);
     let mut open_set = BinaryHeap::from([init_path]);
     let mut closed_set = HashMap::from([((start, Dir::EAST, 0), 0)]);
@@ -113,7 +123,7 @@ pub fn a_star(grid: &Grid, start: Pos, end: Pos) -> Option<Path> {
             break;
         }
 
-        for succ in path.successors(grid, &mut closed_set) {
+        for succ in path.successors(grid, &mut closed_set, min_straight, max_straight) {
             open_set.push(succ)
         }
     }

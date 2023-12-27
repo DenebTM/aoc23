@@ -42,11 +42,21 @@ fn main() {
     let input = stdio_lines_trimmed();
     let grid = Grid::from(input);
 
-    let path = a_star(
+    let part1_path = a_star(
         &grid,
         (0, 0).into(),
         (grid.width() - 1, grid.height() - 1).into(),
+        0,
+        3,
     );
+    println!("part1: {:?}", part1_path.map(|p| p.total_cost));
 
-    println!("part1: {:?}", path.map(|p| p.total_cost))
+    let part2_path = a_star(
+        &grid,
+        (0, 0).into(),
+        (grid.width() - 1, grid.height() - 1).into(),
+        4,
+        10,
+    );
+    println!("part2: {:?}", part2_path.map(|p| p.total_cost));
 }
